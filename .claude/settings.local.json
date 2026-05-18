@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(perl -c trust-augment-cdr3.pl)"
+    ]
+  }
+}

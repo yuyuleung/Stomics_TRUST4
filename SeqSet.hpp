@@ -202,6 +202,7 @@ private:
 	double novelSeqSimilarity ;
 	double refSeqSimilarity ;
 	double repeatSimilarity ; // e.g., the repeat when building the branch graph.
+	double mismatchFactor ; // factor multiplied on the overhang mismatch threshold in ExtendOverlap. -1 = auto (1.0 for bulk, 2.0 for barcode)
 
 	struct _overlap prevAddInfo ; 
 
@@ -2563,8 +2564,9 @@ public:
 		isLongSeqSet = false ;
 
 		novelSeqSimilarity = 0.9 ;
-		refSeqSimilarity = 0.75 ; 
-		repeatSimilarity = 0.95 ; 
+		refSeqSimilarity = 0.75 ;
+		repeatSimilarity = 0.95 ;
+		mismatchFactor = -1 ;
 
 		gapN = 7 ;
 
@@ -2606,6 +2608,11 @@ public:
 	double SetNovelSeqSimilarity( double s )
 	{
 		return novelSeqSimilarity = s ;
+	}
+
+	double SetMismatchFactor( double f )
+	{
+		return mismatchFactor = f ;
 	}
 	
 	void SetConsiderBarcodeInIndexHash(bool s)
@@ -3602,8 +3609,8 @@ public:
 				//if ( !strcmp( read, "TTACTGTAATATACGATATTTTGACTGGTTATTAAGAGGCGACCCAAGAATCAATACTACTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCT" ) && i == 1 )
 				//	fprintf( stderr, "hi\n" ) ;
 				// Only extend the novel seqs.
-				if ( ExtendOverlap( r, len, seq, ( barcode == -1 && !repetitiveData ) ? 
-						1.0 : 2.0, align, overlaps[i], extendedOverlaps[k] ) == 1 )
+				if ( ExtendOverlap( r, len, seq, mismatchFactor > 0 ? mismatchFactor : ( ( barcode == -1 && !repetitiveData ) ?
+						1.0 : 2.0 ), align, overlaps[i], extendedOverlaps[k] ) == 1 )
 				{
 					if ( extendedOverlaps[k].similarity < similarityThreshold )
 					{
@@ -3751,7 +3758,7 @@ public:
 					if ( seq.isRef )
 						continue ;
 				
-					if ( ExtendOverlap( r, len, seq, ( barcode == -1 && !repetitiveData ) ? 1.0 : 2.0, 
+					if ( ExtendOverlap( r, len, seq, mismatchFactor > 0 ? mismatchFactor : ( ( barcode == -1 && !repetitiveData ) ? 1.0 : 2.0 ),
 						align, overlaps[i], extendedOverlaps[k] ) == 1 )
 					{
 						j = i ;
@@ -4681,7 +4688,7 @@ public:
 		{
 			//printf( "%d %d: %d-%d %d-%d %lf\n", i, overlaps[i].seqIdx, overlaps[i].readStart, overlaps[i].readEnd,
 			//		overlaps[i].seqStart, overlaps[i].seqEnd, overlaps[i].similarity) ;
-			if ( ExtendOverlap( r, len, seqs[ overlaps[i].seqIdx ], barcode == -1 ? 1.0 : 2.0, align, 
+			if ( ExtendOverlap( r, len, seqs[ overlaps[i].seqIdx ], mismatchFactor > 0 ? mismatchFactor : ( barcode == -1 ? 1.0 : 2.0 ), align,
 						overlaps[i], extendedOverlap ) == 1 )
 			{
 				/*if ( extendCnt == 0 )

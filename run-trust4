@@ -36,6 +36,7 @@ die "TRUST4 $version usage: ./run-trust4 [OPTIONS]:\n".
     "\t--repseq: the data is from bulk,non-UMI-based TCR-seq or BCR-seq (default: not set)\n".
 		"\t--contigMinCov INT: ignore contigs that have bases covered by fewer than INT reads (default: 0)\n".
 		"\t--minHitLen INT: the minimal hit length for a valid overlap (default: auto)\n".
+		"\t--mismatchFactor FLOAT: factor on the overhang mismatch threshold in overlap extension; smaller = stricter (default: auto, 1.0 bulk / 2.0 barcode)\n".
     "\t--mateIdSuffixLen INT: the suffix length in read id for mate. (default: not used)\n".
     "\t--skipMateExtension: do not extend assemblies with mate information, useful for SMART-seq (default: not used)\n".
 		"\t--skipReadRealign: do not realign reads in annotator, useful for reducing computation cost of barcode/UMI-based repseq (default: not used)\n".
@@ -267,6 +268,11 @@ for ( $i = 0 ; $i < @ARGV ; ++$i )
 		$i += 1 ;
 	}
 	elsif ( $ARGV[$i] eq "--minHitLen" )
+	{
+		$mainArgs .= " ".$ARGV[$i]." ".$ARGV[$i + 1] ;
+		++$i ;
+	}
+	elsif ( $ARGV[$i] eq "--mismatchFactor" )
 	{
 		$mainArgs .= " ".$ARGV[$i]." ".$ARGV[$i + 1] ;
 		++$i ;
@@ -546,6 +552,12 @@ if ( $stage <= 2 )
 	else
 	{
 		system_call( "$WD/annotator -f $vdjcRef -a ${prefix}_final.out -t $threadCnt -o $prefix $annotatorArgs > ${prefix}_annot.fa" ) ;
+	}
+
+	# Augment _cdr3.out with per-contig coverage stats (and read counts if --outputReadAssignment was set)
+	if ( -e "${prefix}_cdr3.out" && -e "${prefix}_final.out" )
+	{
+		system_call( "perl $WD/trust-augment-cdr3.pl $prefix" ) ;
 	}
 }
 
