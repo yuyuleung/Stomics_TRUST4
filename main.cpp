@@ -27,6 +27,7 @@ char usage[] = "./trust4 [OPTIONS]:\n"
 		"\t-c STRING: the path to the kmer count file\n"
 		"\t-k INT: the starting k-mer size for indexing contigs (default: 9)\n"
 		"\t--minHitLen INT: the minimal hit length for a valid overlap (default: auto)\n"
+		"\t--mismatchFactor FLOAT: factor on the overhang mismatch threshold in overlap extension; smaller = stricter, less spurious merging (default: auto, 1.0 for bulk, 2.0 for barcode)\n"
 		"\t--skipMateExtension: skip the step of extension assemblies with mate-pair information\n"
 		///"\t--noV: do not assemble the full length V gene (default: not used)\n"
 		"\t--trimLevel INT: 0: no trim; 1: trim low quality; 2: trim unmatched (default: 1)\n"
@@ -56,6 +57,7 @@ static struct option long_options[] = {
 			{ "minHitLen", required_argument, 0, 10006},
 			{ "contigMinCov", required_argument, 0, 10007},
 			{ "cgeneEnd", required_argument, 0, 10008},
+			{ "mismatchFactor", required_argument, 0, 10009},
 			{ (char *)0, 0, 0, 0} 
 			} ;
 
@@ -652,6 +654,7 @@ int main( int argc, char *argv[] )
 	int firstReadLen = -1 ;
 	int trimLevel = 1 ;
 	int minHitLen = -1 ;
+	double mismatchFactor = -1 ;
 	bool hasMate = false ;
 	bool hasBarcode = false ;
 	bool hasUmi = false ;
@@ -743,6 +746,10 @@ int main( int argc, char *argv[] )
 		else if ( c == 10008)
 		{
 			constantGeneEnd = atoi( optarg ) ;
+		}
+		else if ( c == 10009 ) // mismatchFactor
+		{
+			mismatchFactor = atof( optarg ) ;
 		}
 		else
 		{
@@ -1562,6 +1569,11 @@ int main( int argc, char *argv[] )
 	if (minHitLen != -1)
 	{
 		seqSet.SetHitLenRequired( minHitLen ) ;
+	}
+
+	if (mismatchFactor > 0)
+	{
+		seqSet.SetMismatchFactor( mismatchFactor ) ;
 	}
 
 	if ( firstReadLen > 200 || trimLevel > 1 )
