@@ -1,4 +1,4 @@
-CXX = g++
+CXX = /usr/bin/g++
 CXXFLAGS= -O3 -Wall -g #-pg -g #-Wall #-O3
 LINKPATH= -I./samtools-0.1.19 -L./samtools-0.1.19
 LINKFLAGS = -lpthread -lz 
@@ -19,7 +19,7 @@ trust4: main.o
 bam-extractor: BamExtractor.o
 	if [ ! -f ./samtools-0.1.19/libbam.a ] ; \
 	        then \
-		                cd samtools-0.1.19 ; make ;\
+		                cd samtools-0.1.19 ; make CC=/usr/bin/gcc ;\
 	fi ;
 	$(CXX) -o $@ $(LINKPATH) $(CXXFLAGS) $< $(LINKFLAGS) -lbam
 
