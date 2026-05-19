@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS= -O3 -Wall -g #-pg -g #-Wall #-O3
 LINKPATH= -I./samtools-0.1.19 -L./samtools-0.1.19
-LINKFLAGS = -lpthread -lz 
+LINKFLAGS = -lpthread -lz -static-libstdc++ -static-libgcc
 DEBUG=
 OBJECTS = main.o #BaseReads.o Alignment.o 
 
