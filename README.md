@@ -50,6 +50,7 @@ TRUST4 is also available form [Bioconda](https://anaconda.org/bioconda/trust4). 
 			--repseq: the data is from bulk,non-UMI-based TCR-seq or BCR-seq (default: not set)
 			--contigMinCov INT: ignore contigs that have bases covered by fewer than INT reads (default: 0)
 			--minHitLen INT: the minimal hit length for a valid overlap (default: auto)
+			--mismatchFactor FLOAT: factor on the overhang mismatch threshold in overlap extension; smaller = stricter, less spurious merging (default: auto, 1.0 for bulk, 2.0 for barcode mode)
 			--mateIdSuffixLen INT: the suffix length in read id for mate. (default: not used)
 			--skipMateExtension: do not extend assemblies with mate information, useful for SMART-seq (default: not used)
 			--skipReadRealign: do not realign reads in annotator, useful for reducing computation cost of barcode/UMI-based repseq (default: not used)
@@ -89,9 +90,25 @@ For CDR1,2, score is similarity. for CDR3, score 0.00 means partial CDR3, score 
 
 The output trust_cdr3.out is a tsv file. The fields are:
 
-	consensus_id	index_within_consensus	V_gene	D_gene	J_gene	C_gene	CDR1	CDR2	CDR3	CDR3_score	read_fragment_count CDR3_germline_similarity complete_vdj_assembly
-	
+	consensus_id	index_within_consensus	V_gene	D_gene	J_gene	C_gene	CDR1	CDR2	CDR3	CDR3_score	read_fragment_count CDR3_germline_similarity complete_vdj_assembly	length	min_internal_cov	mean_cov	max_cov	[read_count]
+
 Please note that CDR3_score in trust_cdr3.out has been divided by 100, so 1.00 is the maximum score and 0.01 means imputed CDR3.
+
+The last 4–5 columns are appended automatically after stage 2 (annotation) by `trust-augment-cdr3.pl`:
+
+* `length` — contig length (bp), parsed from the consensus row in `*_final.out`.
+* `min_internal_cov` — minimum per-base read coverage across the full contig (sum of A/C/G/T counts at each position from `*_final.out`, taking the minimum across positions). The most useful per-contig confidence metric: a contig that is genuinely supported by reads will have at least N reads covering every position; assemblies pieced together from a few mismatched reads usually drop to 1× somewhere.
+* `mean_cov` — average per-base read coverage.
+* `max_cov` — maximum per-base read coverage.
+* `read_count` — **only present if the run used `--outputReadAssignment`**. It is the number of reads assigned to this contig in `*_assign.out` (i.e. the number of reads whose realignment supports this contig). Note this differs from the `read_fragment_count` column above, which is the EM-distributed CDR3-level abundance, not raw contig-level read count.
+
+If `--outputReadAssignment` is not set, only 4 columns (`length`, `min_internal_cov`, `mean_cov`, `max_cov`) are appended.
+
+You can also re-run the augmentation alone on an existing prefix without redoing the assembly:
+
+	perl trust-augment-cdr3.pl <prefix>
+
+It rewrites `<prefix>_cdr3.out` in place. If `<prefix>_assign.out` is missing, only the four coverage columns are added.
 
 The output trust_report.tsv is a tsv file. The fileds are:
 	
@@ -102,6 +119,28 @@ For frequency, the BCR(IG) and TCR(TR) chains are normalized respectively. In th
 The output trust_airr.tsv follows [the AIRR format](https://docs.airr-community.org/en/latest/datarep/rearrangements.html). 
 
 ### Practical notes
+
+* #### Tightening assembly to reduce IGK/IGL false-positive contigs (`--mismatchFactor`)
+
+In barcode mode TRUST4 is intentionally permissive when extending an overlap into the read/contig "overhang" region, so that the few reads inside one cell can still merge into a single contig. The internal `mismatchThresholdFactor` defaults to 2.0 in barcode mode (1.0 in bulk), which allows roughly 4–8 absolute mismatches in the overhang region before a merge is rejected.
+
+This permissiveness is the main contributor to false-positive light-chain (IGK/IGL) contigs: the IGKV/IGLV gene families are ~90% homologous within a family, so reads from different V genes often share a high-identity core overlap but diverge in the overhangs. With factor 2.0 those cross-V merges slip through; lowering the factor rejects them while leaving same-V merges (which usually have 0–2 mismatches in the overhang) untouched.
+
+The `--mismatchFactor FLOAT` option (also accepted by `run-trust4`) lets you override this factor:
+
+	# Default behavior (auto: 2.0 barcode / 1.0 bulk) — backwards-compatible
+	./run-trust4 ...
+
+	# Tighten the barcode-mode overhang threshold to the bulk value (recommended starting point for barcode-mode false-positive reduction)
+	./run-trust4 --mismatchFactor 1.0 ...
+
+	# More aggressive (rarely needed)
+	./run-trust4 --mismatchFactor 0.5 ...
+
+Notes:
+* Pass `-1` or any non-positive value to fall back to the default auto behavior. Only positive values override.
+* Tightening this factor mostly affects IGK/IGL; IGH is almost unchanged because IGHV families are less homologous (~75–80%).
+* Combine with `--minHitLen 17` (or `21`) for additional filtering of short spurious seeds — these two parameters block different patterns of mis-merging (overhang mismatch vs. seed length).
 
 * #### Build custom V,J,C gene database (files for -f and --ref)
 
