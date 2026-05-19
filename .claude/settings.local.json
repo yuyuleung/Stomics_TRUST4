@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(perl -c trust-augment-cdr3.pl)"
+      "Bash(perl -c trust-augment-cdr3.pl)",
+      "Bash(grep -n -E 'print|join.*\\\\\\\\t|header' d:/claude_code_project/Stomics_TRUST4/trust-barcoderep.pl)"
     ]
   }
 }

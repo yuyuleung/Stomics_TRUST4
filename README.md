@@ -72,7 +72,9 @@ The primary input to TRUST4 is the alignment of RNA-seq reads in BAM format(-b),
 
 An alternative input to TRUST4 is the raw RNA-seq files in fasta/fastq format (-1/-2 for paired; -u for single-end). You still need the files like -f, --ref from above. In this case, you can directly use IMGT's seuqence file for -f. 
 
-TRUST4 outputs several files. trust_raw.out, trust_final.out are the contigs and corresponding nucleotide weight. trust_annot.fa is in fasta format for the annotation of the consensus assembly. trust_cdr3.out reports the CDR1,2,3 and gene information for each consensus assemblies. And trust_report.tsv is a report file focusing on CDR3 and is compatible with other repertoire analysis tool such as VDJTools. 
+TRUST4 outputs several files. trust_raw.out, trust_final.out are the contigs and corresponding nucleotide weight. trust_annot.fa is in fasta format for the annotation of the consensus assembly. trust_cdr3.out reports the CDR1,2,3 and gene information for each consensus assemblies. And trust_report.tsv is a report file focusing on CDR3 and is compatible with other repertoire analysis tool such as VDJTools.
+
+> **For a complete column-by-column reference of every output file** (including `_raw.out`, `_final.out`, `_assembled_reads.fa`, `_cdr3.out`, `_assign.out`, `_airr.tsv`, `_barcode_report.tsv`, etc.), see [OUTPUTS.md](OUTPUTS.md).
 
 Each header of trust_annot.fa is split into fields:
 
